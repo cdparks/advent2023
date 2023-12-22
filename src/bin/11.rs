@@ -18,9 +18,9 @@ fn parse(input: &str) -> Vec<Vec<char>> {
 fn run(grid: &[Vec<char>], diff: i64) -> Option<usize> {
     let galaxies = &expand(grid, diff);
     let result = galaxies
-        .into_iter()
+        .iter()
         .combinations(2)
-        .map(|pair| manhattan_distance(&pair[0], &pair[1]))
+        .map(|pair| manhattan_distance(pair[0], pair[1]))
         .sum();
     Some(result)
 }
@@ -51,10 +51,10 @@ fn expand(grid: &[Vec<char>], diff: i64) -> Vec<Point> {
 
     let row_diffs = &row_diffs;
     let col_diffs = &col_diffs;
-    grid.into_iter()
+    grid.iter()
         .enumerate()
         .flat_map(|(y, row)| {
-            row.into_iter()
+            row.iter()
                 .enumerate()
                 .filter(|(_, c)| **c == '#')
                 .map(move |(x, _)| {

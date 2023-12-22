@@ -33,21 +33,13 @@ impl Plan {
     }
 
     fn area(&self) -> i64 {
-        let len: i64 = self
-            .steps
-            .iter()
-            .map(|step| step.distance)
-            .sum();
+        let len: i64 = self.steps.iter().map(|step| step.distance).sum();
 
         let vertices: Vec<_> = once(Point::zero())
-            .chain(
-                self.steps
-                    .iter()
-                    .scan(Point::zero(), |point, step| {
-                        *point += step.heading.diff() * step.distance;
-                        Some(*point)
-                    }),
-            )
+            .chain(self.steps.iter().scan(Point::zero(), |point, step| {
+                *point += step.heading.diff() * step.distance;
+                Some(*point)
+            }))
             .collect();
 
         // https://stackoverflow.com/questions/451426/how-do-i-calculate-the-area-of-a-2d-polygon

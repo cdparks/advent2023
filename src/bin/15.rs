@@ -12,8 +12,8 @@ pub fn part_two(input: &str) -> Option<usize> {
         .split(',')
         .flat_map(Command::parse)
         .for_each(|command| match command {
-            Command::Add { label, value } => table.add(&label, value),
-            Command::Remove { label } => table.remove(&label),
+            Command::Add { label, value } => table.add(label, value),
+            Command::Remove { label } => table.remove(label),
         });
     Some(table.power())
 }
