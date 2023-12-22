@@ -6,6 +6,7 @@ version = 3
 name = "advent_of_code"
 version = "0.9.2"
 dependencies = [
+ "lazy_static",
  "num",
  "pico-args",
  "sscanf",
