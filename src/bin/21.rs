@@ -1,26 +1,61 @@
 #![feature(let_chains)]
-use std::{collections::{HashMap, HashSet, VecDeque}, array};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 advent_of_code::solution!(21);
 
 pub fn part_one(input: &str) -> Option<usize> {
     let max_steps = if cfg!(test) { 6 } else { 64 };
-    Some(Map::parse(input).count_reachable_plots(max_steps))
+    let map = Map::parse(input);
+    Some(map.count_reachable_plots(max_steps))
 }
 
-pub fn part_two(_input: &str) -> Option<usize> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let map = Map::parse(input);
+    let max_steps = 26501365;
+    let extra = max_steps % map.size;
+
+    let mut ys = [0; 3];
+    for n in 0..3 {
+        let steps = n * map.size + extra;
+        ys[n as usize] = map.count_reachable_plots(steps as usize) as i64;
+    }
+
+    let x = max_steps / map.size;
+    Some(solve(ys, x) as usize)
+}
+
+
+// Find quadratic coefficients given a 3-element sequence and substitute in x
+fn solve(ys: [i64; 3], x: i64) -> i64 {
+    // First difference
+    let dy1 = ys[1] - ys[0];
+    let dy2 = ys[2] - ys[1];
+
+    // Second difference
+    let ddy = dy2 - dy1;
+
+    // 2a = second difference
+    let a = ddy / 2;
+
+    // 3a + b = ys₂ - ys₁
+    let b = dy2 - 3 * a;
+
+    // first term of sequence
+    let c = ys[0];
+
+    return a * x.pow(2) + b * x + c;
 }
 
 type Point = (i64, i64);
 
 struct Map {
     grid: HashMap<Point, Tile>,
+    size: i64,
 }
 
 impl Map {
     fn parse(input: &str) -> Self {
-        let grid = input
+        let grid: HashMap<Point, Tile> = input
             .lines()
             .enumerate()
             .flat_map(|(y, line)| {
@@ -30,42 +65,61 @@ impl Map {
                 })
             })
             .collect();
-        Self { grid }
+        let max_x = grid.keys().map(|(x, _)| *x).max().unwrap_or_default();
+        let max_y = grid.keys().map(|(_, y)| *y).max().unwrap_or_default();
+        assert!(max_x == max_y);
+        Self {
+            grid,
+            size: max_x + 1,
+        }
     }
 
     fn start(&self) -> Point {
-        self.grid.iter().find_map(|(point, tile)| {
-            if let Tile::Start = tile {
-                Some(*point)
-            } else {
-                None
-            }
-        }).expect("No start point?")
+        self.grid
+            .iter()
+            .find_map(|(point, tile)| {
+                if let Tile::Start = tile {
+                    Some(*point)
+                } else {
+                    None
+                }
+            })
+            .expect("No start point?")
     }
 
     fn count_reachable_plots(&self, max_steps: usize) -> usize {
         let start = self.start();
-        let mut seen: [_; 2] = array::from_fn(|_| HashSet::<Point>::new());
+        let parity = max_steps % 2;
+        let mut seen = HashSet::new();
         let mut queue = VecDeque::from([(start, 0)]);
+        let mut count = 0;
+
         while let Some((point @ (x, y), step)) = queue.pop_front()
             && step <= max_steps
         {
-            let Some(tile) = self.grid.get(&point) else {
+            let grid_point = (x.rem_euclid(self.size), y.rem_euclid(self.size));
+            let Some(tile) = self.grid.get(&grid_point) else {
                 continue;
             };
+
             if *tile == Tile::Rock {
                 continue;
             };
-            let points = &mut seen[step % 2];
-            if points.contains(&point) {
+
+            if seen.contains(&point) {
                 continue;
             }
-            points.insert(point);
+            seen.insert(point);
+
+            if step % 2 == parity {
+                count += 1;
+            }
+
             for (dx, dy) in [(0, -1), (1, 0), (0, 1), (-1, 0)] {
                 queue.push_back(((x + dx, y + dy), step + 1));
             }
         }
-        seen[max_steps % 2].len()
+        count
     }
 }
 
