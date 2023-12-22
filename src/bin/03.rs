@@ -11,7 +11,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     let total = engine
         .numbers
         .into_iter()
-        .filter_map(|(x, y, number, len)| {
+        .filter_map(|((x, y), number, len)| {
             if neighbors(x, y, len).any(|(x, y)| engine.symbols.contains_key(&(x, y))) {
                 Some(number)
             } else {
@@ -24,24 +24,22 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let engine: Engine = str::parse(input).ok()?;
-    let mut star_parts: HashMap<(isize, isize), HashSet<(isize, isize, u32)>> = HashMap::new();
-    engine.numbers.into_iter().for_each(|(x, y, number, len)| {
-        let part = (x, y, number);
-        neighbors(x, y, len).for_each(|(x, y)| {
-            if engine.symbols.get(&(x, y)) == Some(&b'*') {
-                star_parts.entry((x, y)).or_default().insert(part);
-            }
-        })
-    });
+    let mut star_parts: HashMap<Point, HashSet<(Point, u32)>> = HashMap::new();
+    engine
+        .numbers
+        .into_iter()
+        .for_each(|((x, y), number, len)| {
+            let part = ((x, y), number);
+            neighbors(x, y, len).for_each(|(x, y)| {
+                if engine.symbols.get(&(x, y)) == Some(&b'*') {
+                    star_parts.entry((x, y)).or_default().insert(part);
+                }
+            })
+        });
     let total: u32 = star_parts
         .values()
         .filter(|parts| parts.len() == 2)
-        .map(|parts| {
-            parts
-                .into_iter()
-                .map(|(_, _, number)| number)
-                .product::<u32>()
-        })
+        .map(|parts| parts.iter().map(|(_, number)| number).product::<u32>())
         .sum();
     Some(total)
 }
@@ -52,9 +50,11 @@ fn neighbors(x0: isize, y0: isize, len: usize) -> impl Iterator<Item = (isize, i
     (lo..=hi).flat_map(move |x| [y0 - 1, y0, y0 + 1].map(|y| (x, y)))
 }
 
+type Point = (isize, isize);
+
 struct Engine {
-    numbers: Vec<(isize, isize, u32, usize)>,
-    symbols: HashMap<(isize, isize), u8>,
+    numbers: Vec<(Point, u32, usize)>,
+    symbols: HashMap<Point, u8>,
 }
 
 impl FromStr for Engine {
@@ -76,7 +76,7 @@ impl FromStr for Engine {
                         acc = acc * 10 + ((*b - b'0') as u32);
                         x += 1;
                     }
-                    numbers.push((x0 as isize, y as isize, acc, x - x0));
+                    numbers.push(((x0 as isize, y as isize), acc, x - x0));
                 } else if *first == b'.' {
                     x += 1;
                 } else {

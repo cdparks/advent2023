@@ -50,8 +50,8 @@ impl FromStr for Card {
     type Err = !;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (_, rest) = input.split_once(":").unwrap();
-        let (before, after) = rest.split_once("|").unwrap();
+        let (_, rest) = input.split_once(':').unwrap();
+        let (before, after) = rest.split_once('|').unwrap();
         let winners = before.split_whitespace().flat_map(str::parse).collect();
         let given = after.split_whitespace().flat_map(str::parse).collect();
         Ok(Card { winners, given })

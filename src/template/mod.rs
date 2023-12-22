@@ -24,7 +24,7 @@ pub fn read_file_part(part: u8, folder: &str, day: Day) -> String {
 #[must_use]
 pub fn read_file_impl(part: Option<u8>, folder: &str, day: Day) -> String {
     let cwd = env::current_dir().unwrap();
-    let filepath = cwd.join("data").join(folder).join(match part{
+    let filepath = cwd.join("data").join(folder).join(match part {
         None => format!("{day}.txt"),
         Some(part) => format!("{day}-{part}.txt"),
     });
